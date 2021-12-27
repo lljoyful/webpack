@@ -1,0 +1,62 @@
+/*
+  HMR: hot module replacement 热模块替换 / 模块热替换
+    作用：一个模块发生变化，只会重新打包这一个模块（而不是打包所有模块） 
+      极大提升构建速度
+      
+      样式文件：可以使用HMR功能：因为style-loader内部实现了~
+      js文件：默认不能使用HMR功能 --> 需要修改js代码，添加支持HMR功能的代码
+        注意：HMR功能对js的处理，只能处理非入口js文件的其他文件。
+      html文件: 默认不能使用HMR功能.同时会导致问题：html文件不能热更新了~ （不用做HMR功能）
+        解决：修改entry入口，将html文件引入
+*/
+
+const { resolve } = require('path');
+const htmlWebpackPlugin = require('html-webpack-plugin');
+module.exports = {
+  entry: ['./src/js/index.js', './src/index.html'],
+  output: {
+    filename: 'js/built.js',
+    path: resolve(__dirname, 'build'),
+  },
+  module: {
+    rules: [
+      {
+        test: /\.less$/,
+        use: ['style-loader', 'css-loader', 'less-loader'],
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+      {
+        test: /\.html$/,
+        loader: 'html-loader',
+      },
+      {
+        test: /\.(jpg|png|gif)$/,
+        //Rule.type设置类型用于匹配模块。它防止了 defaultRules 和它们的默认导入行为发生
+        type: 'asset/resource',
+        generator: {
+          //Rule.generator.publicPath对指定的资源模式指定 publicPath
+          // publicPath: 'imgs/',
+          //Rule.generator.filename盖了 output.assetModuleFilename 选项并且仅与 asset 和 asset/resource 模块类型一同起作用。
+          filename: 'imgs/[hash:10][ext]',
+        },
+      },
+    ],
+  },
+  plugins: [
+    new htmlWebpackPlugin({
+      template: './src/index.html',
+    }),
+  ],
+  devServer: {
+    static: resolve(__dirname, 'build'),
+    compress: true,
+    port: 3000,
+    open: true,
+    // 开启hmr功能
+    hot: true,
+  },
+  mode: 'development',
+};
